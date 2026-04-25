@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MyBooks — Sign In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="auth-container">
+        <div class="auth-card">
+            <div class="brand">
+                <div class="logo">MB</div>
+                <div class="brand-text">
+                    <h1>MyBooks</h1>
+                    <p class="tag">Your personal flipbook</p>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button id="tab-login" class="tab active" onclick="showLogin()">Sign In</button>
+                <button id="tab-signup" class="tab" onclick="showSignup()">Create Account</button>
+            </div>
+
+            <div id="login-form" class="form-block">
+                <label class="label">Username</label>
+                <input type="text" id="login-user" placeholder="Username">
+                <label class="label">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="login-pass" placeholder="Password">
+                    <span class="toggle-password" onclick="togglePass('login-pass')">👁️</span>
+                </div>
+                <button class="primary" onclick="handleLogin()">Log In</button>
+                <div id="login-error" class="form-error" role="alert" aria-live="polite"></div>
+            </div>
+
+            <div id="signup-form" class="form-block" style="display: none;">
+                <label class="label">Choose a username</label>
+                <input type="text" id="signup-user" placeholder="Username">
+                <label class="label">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="reg-pass" placeholder="Password">
+                    <span class="toggle-password" onclick="togglePass('reg-pass')">👁️</span>
+                </div>
+                <label class="label">Confirm password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirm-pass" placeholder="Confirm Password">
+                    <span class="toggle-password" onclick="togglePass('confirm-pass')">👁️</span>
+                </div>
+                <button class="primary" onclick="handleSignup()">Create Account</button>
+                <div id="signup-error" class="form-error" role="alert" aria-live="polite"></div>
+            </div>
+
+            <p class="small">By continuing you agree to our terms. No social login options are included.</p>
+        </div>
+    </div>
+
+    <div id="loading-overlay" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:40;">
+        <div class="spinner">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="label">Loading…</div>
+        </div>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <header class="app-header">
+            <div>Welcome, <strong id="welcome-user"></strong></div>
+
+            <div class="header-actions">
+                <div class="theme-controls" aria-hidden="false">
+                    <button id="btn-light" class="secondary" onclick="toggleLightTheme()" title="Toggle light theme"><span class="btn-icon" aria-hidden="true"></span><span class="btn-label">Light</span></button>
+                </div>
+            </div>
+
+            <button class="secondary signout" onclick="signOut()">Sign out</button>
+        </header>
+
+        <main class="app-body">
+            <div id="bubble-container" aria-hidden="true"></div>
+            <div id="drop-zone" class="drop-zone">
+                <div class="drop-inner">
+                    <div class="drop-icon">📄</div>
+                    <div class="drop-text">Drag & Drop your masterpiece here</div>
+                    <div class="drop-subtext">Click to browse files (PDF only)</div>
+                </div>
+                <input id="drop-input" type="file" accept="application/pdf" style="display:none" />
+            </div>
+            <div id="drop-message" class="drop-message" aria-live="polite"></div>
+
+            <div id="pdf-viewer" class="pdf-viewer" style="display:none;">
+                <div class="pdf-header">
+                    <div id="pdf-name" class="pdf-name">PDF Preview</div>
+                    <div class="pdf-actions">
+                        <button id="read-book" class="primary" onclick="readAsBook()" disabled>READ AS A BOOK!</button>
+                        <button id="close-pdf" class="secondary" onclick="closePdfViewer()">Back</button>
+                    </div>
+                </div>
+                <div id="pdf-status" class="pdf-status" style="display:none;">UPLOAD SUCCESSFUL</div>
+                <iframe id="pdf-frame" class="pdf-frame" src="" frameborder="0" title="PDF viewer" style="display:block"></iframe>
+            </div>
+
+            <!-- Book view (full-page book) -->
+            <div id="book-view" class="book-view" style="display:none;">
+                <div class="book-header">
+                    <button class="secondary" onclick="closeBookView()">Exit Book</button>
+                    <div class="book-controls">
+                        <div id="book-pagenum" class="book-pagenum">0 / 0</div>
+                        <div class="book-jump">
+                            <input id="book-jump" type="number" min="1" placeholder="Page #" />
+                            <button class="primary" onclick="goToPage()">Go</button>
+                        </div>
+                        <button id="btn-fullscreen" class="secondary" onclick="toggleFullscreen()" title="Enter fullscreen"><span class="btn-icon" aria-hidden="true"></span><span class="btn-label">Fullscreen</span></button>
+                        <button id="btn-reset-size" class="secondary" onclick="resetBookSize()" title="Reset view size"><span class="btn-icon" aria-hidden="true"></span><span class="btn-label">Reset</span></button>
+                        <div id="book-notice" class="book-notice" aria-live="polite"></div>
+                    </div>
+                </div>
+                <div class="book-wrap">
+                    <button class="nav left" onclick="prevBookPage()">⟨</button>
+                    <div class="book-canvas-wrap">
+                        <div class="book-spread">
+                            <canvas id="book-left-canvas" class="left-canvas"></canvas>
+                            <div class="gutter"></div>
+                            <canvas id="book-right-canvas" class="right-canvas"></canvas>
+                        </div>
+                        <!-- Resize handle: drag to resize the reading view -->
+                        <div id="resize-tooltip" class="resize-tooltip" aria-hidden="true" role="status" aria-live="polite"></div>
+                        <div id="resize-handle" class="resize-handle" title="Resize reading view" aria-label="Resize reading view" role="slider" aria-valuemin="300" aria-valuemax="2000"><span class="resize-text">RESIZE</span></div>
+                        <audio id="page-flip-sound" src="assets/page-flip.mp3" preload="auto" aria-hidden="true"></audio>
+                    </div>
+                    <button class="nav right" onclick="nextBookPage()">⟩</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <small>Built with <a href="https://mozilla.github.io/pdf.js/" target="_blank" rel="noopener">PDF.js</a> and <a href="https://github.com/stephane-monnot/page-flip" target="_blank" rel="noopener">StPageFlip</a>. Fonts: <a href="https://fonts.google.com/specimen/Inter" target="_blank" rel="noopener">Inter</a>.</small>
+            <small>PDFs are read locally in-browser via <strong>PDF.js</strong> — your files are not uploaded by default. See <a href="README.md">README</a> for license & content notes.</small>
+        </div>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
